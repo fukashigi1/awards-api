@@ -1,7 +1,6 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
-import jwt from 'jsonwebtoken'
 
 dotenv.config({path: 'CONFIG.env'})
 
