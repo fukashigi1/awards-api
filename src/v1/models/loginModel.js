@@ -24,9 +24,9 @@ export class loginModel {
             }
 
         } else if (validateEmail(usernameEmail.trim())) {
-            query = 'SELECT username, email, pass, user_type FROM users WHERE email = ?'
+            query = 'SELECT username, email, pass, BIN_TO_UUID(user_type) as user_type FROM users WHERE email = ?'
         } else {
-            query = 'SELECT username, email, pass, user_type FROM users WHERE username = ?'
+            query = 'SELECT username, email, pass, BIN_TO_UUID(user_type) as user_type FROM users WHERE username = ?'
         }
 
         if (!password || password === undefined) {
@@ -93,7 +93,7 @@ export class loginModel {
                     status: 200,
                     content: {
                         data: [
-                            {token}
+                            {token: `Bearer ${token}`}
                         ],
                         errors: {
                             msg: "",

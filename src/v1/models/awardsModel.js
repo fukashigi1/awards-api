@@ -1,10 +1,10 @@
 import { connection } from "../../server.js"
 
 export class awardsModel {
-    static allAwards = async () => {
+    static allAwards = async (userData) => {
         return {
             status: 200,
-            content: {hola: "sex"}
+            content: {hola: "sex", userData}
         }
     }
 

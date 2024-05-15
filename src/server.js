@@ -1,6 +1,7 @@
 import express from 'express'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
+import jwt from 'jsonwebtoken'
 
 dotenv.config({path: 'CONFIG.env'})
 
@@ -26,7 +27,42 @@ try {
     console.log(e)
 }
 
+
+
+const PERMISSIONS = {
+    ADMIN: process.env.ADMIN_PERMISSION,
+    FREE_ACCOUNT: process.env.FREE_ACCOUNT_PERMISSION
+    // Otros roles y sus UUIDs
+};
+
+
 // MIDDLEWARES
+function authenticateToken(requiredPermissions = []) {
+    return (req, res, next) => {
+        const authHeader = req.headers['authorization'];
+        let token;
+        if (authHeader !== undefined) {
+            token = authHeader.split(' ')[1];
+        } else {
+            return res.status(401).send("You need to provide a valid token.");
+        }
+
+        if (token == null) return res.status(401).send("You need to provide a valid token.");
+        console.log(requiredPermissions)
+        jwt.verify(token, process.env.SECRET, (err, user) => {
+            if (err) return res.status(403).send("The token you provided is not valid.");
+
+            const { username, email, user_type } = user;
+
+            if (!requiredPermissions.includes(user_type)) {
+                return res.status(403).send("You do not have the required permissions to access this resource.");
+            }
+
+            req.user = { username, email, user_type };
+            next();
+        });
+    };
+}
 
 // ROUTES
 const v1 = '/api/v1'
@@ -35,7 +71,7 @@ import { awardsRoute } from './v1/routes/awardsRoute.js'
 import { registerRoute } from './v1/routes/registerRoute.js'
 import { loginRoute } from './v1/routes/loginRoute.js'
 
-app.use(`${v1}/awards`, awardsRoute)
+app.use(`${v1}/awards`, authenticateToken([PERMISSIONS.ADMIN]), awardsRoute)
 app.use(`${v1}/register`, registerRoute)
 app.use(`${v1}/login`, loginRoute)
 
