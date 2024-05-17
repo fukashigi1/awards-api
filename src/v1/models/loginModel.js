@@ -73,22 +73,12 @@ export class loginModel {
                 }
 
                 const token = await new Promise((resolve, reject) => {
-                    jwt.sign(userData, secret, {expiresIn: '20s'}, (err, token) => {
+                    jwt.sign(userData, secret, {expiresIn: '60m'}, (err, token) => {
                         if (err) reject(err);
                         else resolve(token)
                     });
                 });
 
-                /*const data = await new Promise((resolve, reject) => {
-                    jwt.verify(token, secret, (err, payload) => {
-                        if (err) reject(err);
-                        else resolve(payload);
-                    });
-                });
-                
-                if (data) {
-                    console.log(data)
-                }*/
                 return {
                     status: 200,
                     content: {
@@ -115,8 +105,6 @@ export class loginModel {
                     }
                 }
             }
-
-            
 
         } catch (e) {
             return {

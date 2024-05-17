@@ -27,14 +27,10 @@ try {
     console.log(e)
 }
 
-
-
 const PERMISSIONS = {
     ADMIN: process.env.ADMIN_PERMISSION,
     FREE_ACCOUNT: process.env.FREE_ACCOUNT_PERMISSION
-    // Otros roles y sus UUIDs
 };
-
 
 // MIDDLEWARES
 function authenticateToken(requiredPermissions = []) {
@@ -48,7 +44,6 @@ function authenticateToken(requiredPermissions = []) {
         }
 
         if (token == null) return res.status(401).send("You need to provide a valid token.");
-        console.log(requiredPermissions)
         jwt.verify(token, process.env.SECRET, (err, user) => {
             if (err) return res.status(403).send("The token you provided is not valid.");
 

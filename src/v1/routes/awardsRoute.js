@@ -5,10 +5,10 @@ export const awardsRoute = express()
 
 awardsRoute.get('/', awardsController.allAwards)
 
-awardsRoute.get('/:award', awardsController.singleAward)
+awardsRoute.get('/:id', awardsController.singleAward)
 
 awardsRoute.post('/', awardsController.addAward)
 
-awardsRoute.delete('/:award', awardsController.deleteAward)
+awardsRoute.delete('/:id', awardsController.deleteAward)
 
-awardsRoute.patch('/:award', awardsController.updateAward)
+awardsRoute.patch('/:id', awardsController.updateAward)
