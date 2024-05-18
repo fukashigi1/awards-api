@@ -11,4 +11,4 @@ awardsRoute.post('/', awardsController.addAward)
 
 awardsRoute.delete('/:id', awardsController.deleteAward)
 
-awardsRoute.patch('/:id', awardsController.updateAward)
+awardsRoute.patch('/', awardsController.updateAward)

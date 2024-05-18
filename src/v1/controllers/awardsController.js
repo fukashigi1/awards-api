@@ -14,17 +14,20 @@ export class awardsController {
     }
 
     static async addAward (req, res) {
-        const {award_name} = req.body
+        const {awardName} = req.body
         const {email, username} = req.user
-        const addAward = await awardsModel.addAward({award_name, email, username})
+        const addAward = await awardsModel.addAward({awardName, email, username})
         res.status(addAward.status).json(addAward.content)
     }
 
     static async deleteAward (req, res) {
-        
+        const {id} = req.params
+        const {username, email} = req.user
+        const deleteAward = await awardsModel.deleteAward({id, username, email})
+        res.status(deleteAward.status).json(deleteAward.content)
     }
 
     static async updateAward (req, res) {
-        
+        // :D
     }
 }

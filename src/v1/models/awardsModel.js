@@ -6,7 +6,7 @@ export class awardsModel {
         const {email, username} = userData
         try {
             const [userId] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
-            const [obtainAwards] = await connection.query('SELECT BIN_TO_UUID(id) as id, award_name FROM awards WHERE owner = UUID_TO_BIN(?)', userId[0].id)
+            const [obtainAwards] = await connection.query('SELECT BIN_TO_UUID(id) as id, award_name as awardName FROM awards WHERE owner = UUID_TO_BIN(?)', userId[0].id)
             
             return {
                 status: 200,
@@ -39,7 +39,7 @@ export class awardsModel {
             const [userId] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
 
             try {
-                const [obtainAwards] = await connection.query('SELECT award_name, hash, public, closed FROM awards WHERE owner = UUID_TO_BIN(?) AND id = UUID_TO_BIN(?)', [userId[0].id, id])
+                const [obtainAwards] = await connection.query('SELECT award_name as awardName, hash, public, closed FROM awards WHERE owner = UUID_TO_BIN(?) AND id = UUID_TO_BIN(?)', [userId[0].id, id])
                 
                 return {
                     status: 200,
@@ -80,13 +80,13 @@ export class awardsModel {
     }
 
     static addAward = async (awardData) => {
-        let {award_name, email, username} = awardData
+        let {awardName, email, username} = awardData
 
-        if (award_name == undefined) {
-            award_name = ''
+        if (awardName == undefined) {
+            awardName = ''
         }
 
-        if (award_name.trim() == '') {
+        if (awardName.trim() == '') {
             return {
                 status: 400,
                 content: {
@@ -94,7 +94,7 @@ export class awardsModel {
                     errors: {
                         msg: "",
                         errors: [
-                            {element: 'award_name', msg: 'Award name can not be empty.'}
+                            {element: 'awardName', msg: 'Award name can not be empty.'}
                         ]
                     }
                 }
@@ -106,16 +106,17 @@ export class awardsModel {
 
             const hash = generateHash(36)
 
-            const [doesExist] = await connection.query('SELECT award_name FROM awards WHERE owner = UUID_TO_bIN(?) AND award_name = ?', [userId[0].id, award_name])
+            const [doesExist] = await connection.query('SELECT award_name as awardName FROM awards WHERE owner = UUID_TO_bIN(?) AND award_name = ?', [userId[0].id, awardName])
 
             if (doesExist.length == 0) {
-                const [addAward] = await connection.query('INSERT INTO awards (award_name, owner, hash) VALUES (?, UUID_TO_BIN(?), ?)', [award_name, userId[0].id, hash])
+                const [addAward] = await connection.query('INSERT INTO awards (award_name, owner, hash) VALUES (?, UUID_TO_BIN(?), ?)', [awardName, userId[0].id, hash])
+                const [obtainIdAward] = await connection.query('SELECT BIN_TO_UUID(id) as awardId FROM awards WHERE award_name = ? AND owner = UUID_TO_BIN(?) AND hash = ?', [awardName, userId[0].id, hash])
 
                 if (addAward.affectedRows == 1) {
                     return {
                         status: 201,
                         content: {
-                            data: [],
+                            data: obtainIdAward,
                             errors: {
                                 msg: "",
                                 errors: []
@@ -161,8 +162,74 @@ export class awardsModel {
         }
     }
 
-    static deleteAward = async () => {
-        // falta
+    static deleteAward = async (awardData) => {
+        const {id, username, email} = awardData
+
+        if (id === undefined || id === null || id.trim() === '') {
+            return {
+                status: 400,
+                content: {
+                    data: [],
+                    errors: {
+                        msg: "The id provided can not be empty.",
+                        errors: []
+                    }
+                }
+            }
+        }
+
+        try {
+            const [userId] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
+            try {
+                const [deleteAward] = await connection.query('DELETE FROM awards WHERE id = UUID_TO_BIN(?) AND owner = UUID_TO_BIN(?)', [id, userId[0].id])
+                if (deleteAward.affectedRows >= 1) {
+                    return {
+                        status: 200,
+                        content: {
+                            data: [],
+                            errors: {
+                                msg: "",
+                                errors: []
+                            }
+                        }
+                    }
+                } else {
+                    return {
+                        status: 400,
+                        content: {
+                            data: [],
+                            errors: {
+                                msg: "The id of the award provided does not match with any of your awards.",
+                                errors: []
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                return {
+                    status: 400,
+                    content: {
+                        data: [],
+                        errors: {
+                            msg: "The id of the award provided does not match with any of your awards.",
+                            errors: []
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            return {
+                status: 500,
+                content: {
+                    data: [],
+                    errors: {
+                        msg: "An internal server error has ocurred while trying to delete a resource.",
+                        errors: []
+                    }
+                }
+            }
+        }
+        
     }
 
     static updateAward = async () => {
