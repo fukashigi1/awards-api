@@ -82,7 +82,7 @@ export class awardsModel {
     static addAward = async (awardData) => {
         let {awardName, email, username} = awardData
 
-        if (awardName == undefined) {
+        if (awardName === undefined || awardName === null) {
             awardName = ''
         }
 
@@ -232,7 +232,126 @@ export class awardsModel {
         
     }
 
-    static updateAward = async () => {
-        // falta
+    static updateAward = async (data) => {
+        const {awardName, awardId, newAwardName, isPublic, isClosed, changeHash, username, email} = data
+        let query = 'UPDATE awards SET '
+        let params = []
+    
+        if (awardName === undefined || awardName === null || awardName === '') {
+            return {
+                status: 400,
+                content: {
+                    data: [],
+                    errors: {
+                        msg: "The award name can not be empty.",
+                        errors: []
+                    }
+                }
+            };
+        }
+    
+        if (awardId === undefined || awardId === null || awardId === '') {
+            return {
+                status: 400,
+                content: {
+                    data: [],
+                    errors: {
+                        msg: "The award id can not be empty.",
+                        errors: []
+                    }
+                }
+            };
+        }
+    
+        let fieldsToUpdate = []
+    
+        if (newAwardName !== undefined && newAwardName !== null && newAwardName !== '') {
+            fieldsToUpdate.push('award_name = ?')
+            params.push(newAwardName.trim())
+        }
+    
+        if (isPublic !== undefined && isPublic !== null) {
+            fieldsToUpdate.push('public = ?')
+            params.push((isPublic >= 1) ? 1 : 0)
+        }
+    
+        if (isClosed !== undefined && isClosed !== null) {
+            fieldsToUpdate.push('closed = ?')
+            params.push((isClosed >= 1) ? 1 : 0)
+        }
+    
+        let newHash;
+        if (changeHash === true) {
+            newHash = generateHash(36)
+            fieldsToUpdate.push('hash = ?')
+            params.push(newHash)
+        }
+    
+        if (fieldsToUpdate.length === 0) {
+            return {
+                status: 400,
+                content: {
+                    data: [],
+                    errors: {
+                        msg: "No fields to update.",
+                        errors: []
+                    }
+                }
+            }
+        }
+    
+        query += fieldsToUpdate.join(', ')
+    
+        try {
+            const [userIdResult] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
+    
+            query += ' WHERE owner = UUID_TO_BIN(?) AND id = UUID_TO_BIN(?) AND award_name = ?'
+            params.push(userIdResult[0].id)
+            params.push(awardId)
+            params.push(awardName)
+
+            const [updateAwardResult] = await connection.query(query, params)
+
+            if (updateAwardResult.affectedRows != 0) {
+                return {
+                    status: 200,
+                    content: {
+                        data: [],
+                        errors: {
+                            msg: "",
+                            errors: []
+                        }
+                    }
+                }
+            } else {
+                return {
+                    status: 400,
+                    content: {
+                        data: [],
+                        errors: {
+                            msg: "No awards have been modfied. Please check your input.",
+                            errors: []
+                        }
+                    }
+                }
+            }
+    
+        } catch (e) {
+            return {
+                status: 500,
+                content: {
+                    data: [],
+                    errors: {
+                        msg: "An error occurred while updating the award: " + e.message,
+                        errors: {
+                            msg: "The award name can not be empty.",
+                            errors: []
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+
+// actualizar con codigo de errores.

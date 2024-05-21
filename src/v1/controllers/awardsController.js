@@ -28,6 +28,9 @@ export class awardsController {
     }
 
     static async updateAward (req, res) {
-        // :D
+        const {awardName, awardId, newAwardName, isPublic, isClosed, changeHash} = req.body
+        const {username, email} = req.user
+        const updateAward = await awardsModel.updateAward({awardName, awardId, newAwardName, isPublic, isClosed, changeHash, username, email})
+        res.status(updateAward.status).json(updateAward.content)
     }
 }

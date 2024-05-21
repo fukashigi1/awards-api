@@ -66,7 +66,7 @@ import { awardsRoute } from './v1/routes/awardsRoute.js'
 import { registerRoute } from './v1/routes/registerRoute.js'
 import { loginRoute } from './v1/routes/loginRoute.js'
 
-app.use(`${v1}/awards`, authenticateToken([PERMISSIONS.ADMIN]), awardsRoute)
+app.use(`${v1}/awards`, authenticateToken([PERMISSIONS.ADMIN, PERMISSIONS.FREE_ACCOUNT]), awardsRoute)
 app.use(`${v1}/register`, registerRoute)
 app.use(`${v1}/login`, loginRoute)
 
