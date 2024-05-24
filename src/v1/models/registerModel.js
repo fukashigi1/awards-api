@@ -1,6 +1,7 @@
 import { connection } from "../../server.js"
 import bcrypt from 'bcrypt'
 import { validateEmail, validatePassword } from "../../utils.js"
+import { BR } from '../businessRules.js'
 
 export class registerModel {
     static register = async (userData) => {
@@ -8,58 +9,58 @@ export class registerModel {
         let errors = []
         try {
             if (!username.trim()) { 
-                errors.push({element: 'username', msg: 'Username can not be empty.'})
+                errors.push({br: '001', title: BR['001']})
             }
         } catch(e) {
-            errors.push({element: 'username', msg: 'Username can not be empty.'})
+            errors.push({br: '001', title: BR['001']})
         }
 
         try {
             if (!email.trim()) {
-                errors.push({element: 'email', msg: 'Email can not be empty.'})
+                errors.push({br: '004', title: BR['004']})
             } 
             if (!validateEmail(email.trim())) {
-                errors.push({element: 'email', msg: 'Email is invalid.'})
+                errors.push({br: '005', title: BR['005']})
             }
         } catch (e) {
-            errors.push({element: 'email', msg: 'Email can not be empty.'})
+            errors.push({br: '004', title: BR['004']})
         }
 
         if (confirmEmail === undefined) {
-            errors.push({element: 'confirmEmail', msg: 'Email confirmation can not be empty.'})
+            errors.push({br: '006', title: BR['006']})
         }
 
         if (!password) {
-            errors.push({element: 'password', msg: 'Password can not be empty.'})
+            errors.push({br: '008', title: BR['008']})
         } else if (!validatePassword(password)) {
-            errors.push({element: 'password', msg: 'Password must be at least 8 characters long.'})
+            errors.push({br: '009', title: BR['009']})
         }
 
         if (confirmPassword === undefined) {
-            errors.push({element: 'confirmPassword', msg: 'Password confirmation can not be empty.'})
+            errors.push({br: '010', title: BR['010']})
         } else if (password != confirmPassword) {
-            errors.push({element: 'confirmPassword', msg: 'Password confirmation can not be different from password.'})
+            errors.push({br: '011', title: BR['011']})
         }
 
         try {
             if (email.trim() != confirmEmail.trim()) {
-                errors.push({element: 'confirmEmail', msg: 'Email confirmation can not be different from email.'})
+                errors.push({br: '007', title: BR['007']})
             }
         } catch (e) {
         }
         
         try {
-            if (confirmEmail !== undefined) {
+            if (email !== undefined && email !== null) {
                 const [emailExist] = await connection.query('SELECT email FROM users WHERE email = ?', [email.trim()])
                 if (emailExist.length > 0) {
-                    errors.push({element: 'email', msg: 'The email entered is already in use.'})
+                    errors.push({br: '012', title: BR['012']})
                 }
             }
 
-            if (username !== undefined) {
+            if (username !== undefined && username !== null) {
                 const [usernameExist] = await connection.query('SELECT username FROM users WHERE username = ?', [username.trim()])
                 if (usernameExist.length > 0) {
-                    errors.push({element: 'username', msg: 'The username entered is already in use.'})
+                    errors.push({br: '003', title: BR['003']})
                 }
             }
 
@@ -67,11 +68,9 @@ export class registerModel {
             return {
                 status: 500,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An internal server error has ocurred.",
-                        errors: []
-                    }
+                    status: 'error',
+                    message: 'An internal server error has ocurred.',
+                    code: 'ERR-001'
                 }
             }
         }
@@ -80,37 +79,39 @@ export class registerModel {
             return {
                 status: 400, 
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An error has ocurred because some data is missing or incorrect.",
-                        errors: errors.reverse()
-                    }
+                    status: 'fail',
+                    data: errors.reverse()
                 }
             }
         } else {
             try {
                 const hashedPassword = await bcrypt.hash(password, 10)
-                let [registerResult] = await connection.query('INSERT INTO users (username, email, pass) VALUES (?, ?, ?)', [username.trim(), confirmEmail.trim().toLowerCase(), hashedPassword])   
-                if (registerResult.affectedRows > 0) {
-                    return {
-                        status: 201, 
-                        content: {
-                            data: [],
-                            errors: {
-                                msg: "",
-                                errors: []
+                try {
+                    let [registerResult] = await connection.query('INSERT INTO users (username, email, pass) VALUES (?, ?, ?)', [username.trim(), email.trim().toLowerCase(), hashedPassword])   
+                    if (registerResult.affectedRows > 0) {
+                        return {
+                            status: 201, 
+                            content: {
+                                status: 'success',
+                                data: null
+                            }
+                        }
+                    } else {
+                        return {
+                            status: 409,
+                            content: {
+                                data: 'fail',
+                                data: {br: '020', title: BR['020']}
                             }
                         }
                     }
-                } else {
+                } catch (e) {
                     return {
                         status: 500,
                         content: {
-                            data: [],
-                            errors: {
-                                msg: "An internal server error has ocurred.",
-                                errors: []
-                            }
+                            status: 'error',
+                            message: 'An internal server error has ocurred.',
+                            code: 'ERR-001'
                         }
                     }
                 }
@@ -119,13 +120,19 @@ export class registerModel {
                 return {
                     status: 500,
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "An internal server error has ocurred.",
-                            errors: []
-                        }
+                        status: 'error',
+                        message: 'An internal server error has ocurred.',
+                        code: 'ERR-002'
                     }
                 }
+            }
+        }
+        return {
+            status: 500,
+            content: {
+                status: 'error',
+                message: 'An internal server error has ocurred.',
+                code: 'ERR-003'
             }
         }
     }

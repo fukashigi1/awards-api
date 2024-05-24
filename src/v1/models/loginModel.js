@@ -2,6 +2,7 @@ import { connection } from "../../server.js"
 import { validateEmail } from "../../utils.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
+import { BR } from '../businessRules.js'
 
 export class loginModel {
     static login = async (userData) => {
@@ -13,13 +14,8 @@ export class loginModel {
             return {
                 status: 400, 
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An error has ocurred because some data is missing or incorrect.",
-                        errors: [
-                            {element: 'usernameEmail', msg: 'The username or email can not be empty.'}
-                        ]
-                    }
+                    status: 'fail',
+                    data: {br: '013', title: BR['013']}
                 }
             }
 
@@ -33,13 +29,8 @@ export class loginModel {
             return {
                 status: 400, 
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An error has ocurred because some data is missing or incorrect.",
-                        errors: [
-                            {element: 'password', msg: 'Password can not be empty.'}
-                        ]
-                    }
+                    status: 'fail',
+                    data: {br: '008', title: BR['008']}
                 }
             }   
         } 
@@ -50,58 +41,53 @@ export class loginModel {
                 return {
                     status: 400, 
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "An error has ocurred because some data is missing or incorrect.",
-                            errors: [
-                                {element: 'usernameEmail', msg: 'Log in credentials are not valid.'}
-                            ]
-                        }
+                        status: 'fail',
+                        data: {br: '014', title: BR['014']}
                     }
                 }   
             } 
 
-            const isPasswordCorrect = await bcrypt.compare(password, existUser[0].pass);
+            try {
+                const isPasswordCorrect = await bcrypt.compare(password, existUser[0].pass);
 
-            if (isPasswordCorrect) {
-                // generate token
-                const secret = process.env.SECRET
-                const userData = {
-                    username: existUser[0].username,
-                    email: existUser[0].email,
-                    user_type: existUser[0].user_type
-                }
-
-                const token = await new Promise((resolve, reject) => {
-                    jwt.sign(userData, secret, {expiresIn: '60m'}, (err, token) => {
-                        if (err) reject(err);
-                        else resolve(token)
+                if (isPasswordCorrect) {
+                    const secret = process.env.SECRET
+                    const userData = {
+                        username: existUser[0].username,
+                        email: existUser[0].email,
+                        user_type: existUser[0].user_type
+                    }
+    
+                    const token = await new Promise((resolve, reject) => {
+                        jwt.sign(userData, secret, {expiresIn: '60m'}, (err, token) => {
+                            if (err) reject(err);
+                            else resolve(token)
+                        });
                     });
-                });
-
-                return {
-                    status: 200,
-                    content: {
-                        data: [
-                            {token: `Bearer ${token}`}
-                        ],
-                        errors: {
-                            msg: "",
-                            errors: []
+    
+                    return {
+                        status: 200,
+                        content: {
+                            status: 'success',
+                            data: {token: `Bearer ${token}`}
+                        }
+                    }
+                } else {
+                    return {
+                        status: 401,
+                        content: {
+                            status: 'fail',
+                            data: {br: '014', title: BR['014']}
                         }
                     }
                 }
-            } else {
+            } catch (e) {
                 return {
-                    status: 401,
+                    status: 500,
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "",
-                            errors: [
-                                {element: 'usernameEmail', msg: 'Log in credentials are not valid.'}
-                            ]
-                        }
+                        status: 'error',
+                        message: 'An internal server error has ocurred.',
+                        code: 'ERR-004'
                     }
                 }
             }
@@ -110,15 +96,20 @@ export class loginModel {
             return {
                 status: 500,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An internal server error has ocurred.",
-                        errors: []
-                    }
+                    status: 'error',
+                    message: 'An internal server error has ocurred.',
+                    code: 'ERR-001'
                 }
             }
         }
-
+        return {
+            status: 500,
+            content: {
+                status: 'error',
+                message: 'An internal server error has ocurred.',
+                code: 'ERR-003'
+            }
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 import { connection } from "../../server.js"
 import { generateHash } from "../../utils.js"
+import { BR } from '../businessRules.js'
 
 export class awardsModel {
     static allAwards = async (userData) => {
@@ -11,11 +12,8 @@ export class awardsModel {
             return {
                 status: 200,
                 content: {
-                    data: obtainAwards,
-                    errors: {
-                        msg: "",
-                        errors: []
-                    }
+                    status: 'success',
+                    data: obtainAwards
                 }
             }
 
@@ -23,11 +21,9 @@ export class awardsModel {
             return {
                 status: 500,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An internal server error has ocurred while trying to fetch data.",
-                        errors: []
-                    }
+                    status: 'error',
+                    message: 'An internal server error has ocurred.',
+                    code: 'ERR-001'
                 }
             }
         }
@@ -35,6 +31,15 @@ export class awardsModel {
 
     static singleAward = async (data) => {
         const {id, username, email} = data
+        if (id !== null && id !== undefined) {
+            return {
+                status: 400,
+                content: {
+                    status: 'fail',
+                    data: {br: '015', title: BR['015']}
+                }
+            }
+        }
         try {
             const [userId] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
 
@@ -53,27 +58,22 @@ export class awardsModel {
                 }
             } catch (e) {
                 return {
-                    status: 400,
+                    status: 500,
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "The id provided does not exist.",
-                            errors: []
-                        }
+                        status: 'error',
+                        message: 'An internal server error has ocurred.',
+                        code: 'ERR-001'
                     }
                 }
             }
-
 
         } catch (e) {
             return {
                 status: 500,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An internal server error has ocurred while trying to fetch data.",
-                        errors: []
-                    }
+                    status: 'error',
+                    message: 'An internal server error has ocurred.',
+                    code: 'ERR-001'
                 }
             }
         }
@@ -90,13 +90,8 @@ export class awardsModel {
             return {
                 status: 400,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "",
-                        errors: [
-                            {element: 'awardName', msg: 'Award name can not be empty.'}
-                        ]
-                    }
+                    status: 'fail',
+                    data: {br: '016', msg: BR['016']}
                 }
             }
         }
@@ -116,22 +111,16 @@ export class awardsModel {
                     return {
                         status: 201,
                         content: {
-                            data: obtainIdAward,
-                            errors: {
-                                msg: "",
-                                errors: []
-                            }
+                            status: 'success',
+                            data: obtainIdAward
                         }
                     }
                 } else {
                     return {
                         status: 422,
                         content: {
-                            data: [],
-                            errors: {
-                                msg: "This award could not be created.",
-                                errors: []
-                            }
+                            status: 'fail',
+                            data: {br: '017', title: BR['017']}
                         }
                     }
                 }
@@ -139,11 +128,8 @@ export class awardsModel {
                 return {
                     status: 400,
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "You can not have two awards by the same name.",
-                            errors: []
-                        }
+                        status: 'fail',
+                        data: {br: '021', title: BR['021']}
                     }
                 }
             }
@@ -152,11 +138,9 @@ export class awardsModel {
             return {
                 status: 500,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An internal server error has ocurred while trying to fetch data.",
-                        errors: []
-                    }
+                    status: 'error',
+                    message: 'An internal server error has ocurred.',
+                    code: 'ERR-001'
                 }
             }
         }
@@ -169,11 +153,8 @@ export class awardsModel {
             return {
                 status: 400,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "The id provided can not be empty.",
-                        errors: []
-                    }
+                    status: 'fail',
+                    data: {br: '018', title: BR['018']}
                 }
             }
         }
@@ -186,22 +167,16 @@ export class awardsModel {
                     return {
                         status: 200,
                         content: {
-                            data: [],
-                            errors: {
-                                msg: "",
-                                errors: []
-                            }
+                            status: 'success',
+                            data: null
                         }
                     }
                 } else {
                     return {
                         status: 400,
                         content: {
-                            data: [],
-                            errors: {
-                                msg: "The id of the award provided does not match with any of your awards.",
-                                errors: []
-                            }
+                            status: 'fail',
+                            data: {br: '019', title: BR['019']}
                         }
                     }
                 }
@@ -209,11 +184,8 @@ export class awardsModel {
                 return {
                     status: 400,
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "The id of the award provided does not match with any of your awards.",
-                            errors: []
-                        }
+                        status: 'fail',
+                        data: {br: '019', title: BR['019']}
                     }
                 }
             }
@@ -221,15 +193,12 @@ export class awardsModel {
             return {
                 status: 500,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An internal server error has ocurred while trying to delete a resource.",
-                        errors: []
-                    }
+                    status: 'error',
+                    message: 'An internal server error has ocurred.',
+                    code: 'ERR-001'
                 }
             }
         }
-        
     }
 
     static updateAward = async (data) => {
@@ -241,11 +210,8 @@ export class awardsModel {
             return {
                 status: 400,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "The award name can not be empty.",
-                        errors: []
-                    }
+                    status: 'fail',
+                    data: {br: '016', title: BR['016']}
                 }
             };
         }
@@ -254,11 +220,8 @@ export class awardsModel {
             return {
                 status: 400,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "The award id can not be empty.",
-                        errors: []
-                    }
+                    status: 'fail',
+                    data: {br: '016', title: BR['016']}
                 }
             };
         }
@@ -291,11 +254,8 @@ export class awardsModel {
             return {
                 status: 400,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "No fields to update.",
-                        errors: []
-                    }
+                    status: 'fail',
+                    data: {br: '022', title: BR['022']}
                 }
             }
         }
@@ -316,22 +276,16 @@ export class awardsModel {
                 return {
                     status: 200,
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "",
-                            errors: []
-                        }
+                        status: 'success',
+                        data: null
                     }
                 }
             } else {
                 return {
                     status: 400,
                     content: {
-                        data: [],
-                        errors: {
-                            msg: "No awards have been modfied. Please check your input.",
-                            errors: []
-                        }
+                        status: 'fail',
+                        data: {br: '023', title: BR['023']}
                     }
                 }
             }
@@ -340,18 +294,11 @@ export class awardsModel {
             return {
                 status: 500,
                 content: {
-                    data: [],
-                    errors: {
-                        msg: "An error occurred while updating the award: " + e.message,
-                        errors: {
-                            msg: "The award name can not be empty.",
-                            errors: []
-                        }
-                    }
+                    status: 'error',
+                    message: 'An internal server error has ocurred.',
+                    code: 'ERR-001'
                 }
             }
         }
     }
 }
-
-// actualizar con codigo de errores.
