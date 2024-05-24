@@ -300,5 +300,13 @@ export class awardsModel {
                 }
             }
         }
+        return {
+            status: 500,
+            content: {
+                status: 'error',
+                message: 'An internal server error has ocurred.',
+                code: 'ERR-003'
+            }
+        }
     }
 }
