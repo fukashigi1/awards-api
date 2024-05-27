@@ -2,6 +2,11 @@ import express from 'express'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
 import jwt from 'jsonwebtoken'
+import { logger } from './logger/logger.js'
+
+logger.info('hola', "hola")
+logger.warn('hola')
+logger.error('hola')
 
 dotenv.config({path: 'CONFIG.env'})
 
