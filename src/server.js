@@ -4,9 +4,6 @@ import mysql from 'mysql2/promise'
 import jwt from 'jsonwebtoken'
 import { logger } from './logger/logger.js'
 
-logger.info('hola', "hola")
-logger.warn('hola')
-logger.error('hola')
 
 dotenv.config({path: 'CONFIG.env'})
 
@@ -29,7 +26,7 @@ export let connection;
 try {
     connection = await mysql.createConnection(db_config)
 } catch (e) {
-    console.log(e)
+    logger.error(e.code)
 }
 
 const PERMISSIONS = {
@@ -38,7 +35,7 @@ const PERMISSIONS = {
 };
 
 // MIDDLEWARES
-function authenticateToken(requiredPermissions = []) {
+export function authenticateToken(requiredPermissions = []) {
     return (req, res, next) => {
         const authHeader = req.headers['authorization'];
         let token;
@@ -49,10 +46,15 @@ function authenticateToken(requiredPermissions = []) {
         }
 
         if (token == null) return res.status(401).send("You need to provide a valid token.");
-        jwt.verify(token, process.env.SECRET, (err, user) => {
+        jwt.verify(token, process.env.SECRET, async (err, user) => {
             if (err) return res.status(403).send("The token you provided is not valid.");
 
             const { username, email, user_type } = user;
+            const exists = await checkIfUserExists(email, username)
+
+            if (exists.length == 0) {
+                return res.status(403).send("User data does not match or does not exist.");
+            }
 
             if (!requiredPermissions.includes(user_type)) {
                 return res.status(403).send("You do not have the required permissions to access this resource.");
@@ -62,6 +64,10 @@ function authenticateToken(requiredPermissions = []) {
             next();
         });
     };
+}
+
+async function checkIfUserExists(email, username) {
+    return await connection.query('SELECT 1 FROM users WHERE email = ? AND username = ?', [email, username])
 }
 
 // ROUTES

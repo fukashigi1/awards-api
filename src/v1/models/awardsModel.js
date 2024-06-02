@@ -1,3 +1,4 @@
+import { logger } from "../../logger/logger.js"
 import { connection } from "../../server.js"
 import { generateHash } from "../../utils.js"
 import { BR } from '../businessRules.js'
@@ -31,7 +32,7 @@ export class awardsModel {
 
     static singleAward = async (data) => {
         const {id, username, email} = data
-        if (id !== null && id !== undefined) {
+        if (id === null || id === undefined) {
             return {
                 status: 400,
                 content: {
@@ -49,11 +50,8 @@ export class awardsModel {
                 return {
                     status: 200,
                     content: {
-                        data: obtainAwards,
-                        errors: {
-                            msg: "",
-                            errors: []
-                        }
+                        status: 'success',
+                        data: obtainAwards
                     }
                 }
             } catch (e) {
