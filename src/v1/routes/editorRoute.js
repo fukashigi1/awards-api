@@ -3,4 +3,5 @@ import { editorController } from '../controllers/editorController.js'
 
 export const editorRoute = express()
 
-editorRoute.get('/:id', editorController.obtainQuestions)
+editorRoute.get('/:id', editorController.obtainAward)
+editorRoute.post('/', editorController.saveQuestions)

@@ -3,6 +3,7 @@ import { validateEmail } from "../../utils.js"
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import { BR } from '../businessRules.js'
+import { logger } from "../../logger/logger.js"
 
 export class loginModel {
     static login = async (userData) => {
@@ -82,6 +83,7 @@ export class loginModel {
                     }
                 }
             } catch (e) {
+                logger.error('ERR-004')
                 return {
                     status: 500,
                     content: {
@@ -93,6 +95,7 @@ export class loginModel {
             }
 
         } catch (e) {
+            logger.error('ERR-001')
             return {
                 status: 500,
                 content: {
@@ -102,6 +105,7 @@ export class loginModel {
                 }
             }
         }
+        logger.error('ERR-001')
         return {
             status: 500,
             content: {

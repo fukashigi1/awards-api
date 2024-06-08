@@ -2,13 +2,25 @@ import { logger } from "../../logger/logger.js"
 import { connection } from "../../server.js"
 import { generateHash } from "../../utils.js"
 import { BR } from '../businessRules.js'
+import { checkIfUserIsAdmin } from "../../server.js"
 
 export class awardsModel {
     static allAwards = async (userData) => {
-        const {email, username} = userData
+        const {email, username, user_type} = userData
+
+        /*if (checkIfUserIsAdmin(user_type)) {
+            return {
+                status: 403,
+                content: {
+                    status: 'fail',
+                    data: "You do not have the required permissions to access this resource."
+                }
+            }
+        }*/
+
         try {
             const [userId] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
-            const [obtainAwards] = await connection.query('SELECT BIN_TO_UUID(id) as id, award_name as awardName FROM awards WHERE owner = UUID_TO_BIN(?)', userId[0].id)
+            const [obtainAwards] = await connection.query('SELECT BIN_TO_UUID(id) as id, award_name as awardName, hash, public, closed, creation_time as creationTime, modification_time as modificationTime FROM awards WHERE owner = UUID_TO_BIN(?)', userId[0].id)
             
             return {
                 status: 200,
@@ -19,6 +31,7 @@ export class awardsModel {
             }
 
         } catch (e) {
+            logger.error('ERR-001')
             return {
                 status: 500,
                 content: {
@@ -45,8 +58,18 @@ export class awardsModel {
             const [userId] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
 
             try {
-                const [obtainAwards] = await connection.query('SELECT award_name as awardName, hash, public, closed FROM awards WHERE owner = UUID_TO_BIN(?) AND id = UUID_TO_BIN(?)', [userId[0].id, id])
+                const [obtainAwards] = await connection.query('SELECT award_name as awardName, hash, public, closed, creation_time as creationTime, modification_time as modificationTime FROM awards WHERE owner = UUID_TO_BIN(?) AND id = UUID_TO_BIN(?)', [userId[0].id, id])
                 
+                if (obtainAwards.length == 0) {
+                    return {
+                        status: 400,
+                        content: {
+                            status: 'fail',
+                            data: {br: '019', title: BR['019']}
+                        }
+                    }
+                } 
+
                 return {
                     status: 200,
                     content: {
@@ -54,7 +77,9 @@ export class awardsModel {
                         data: obtainAwards
                     }
                 }
+
             } catch (e) {
+                logger.error('ERR-001')
                 return {
                     status: 500,
                     content: {
@@ -66,6 +91,7 @@ export class awardsModel {
             }
 
         } catch (e) {
+            logger.error('ERR-001')
             return {
                 status: 500,
                 content: {
@@ -133,6 +159,7 @@ export class awardsModel {
             }
 
         } catch (e) {
+            logger.error('ERR-001')
             return {
                 status: 500,
                 content: {
@@ -188,6 +215,7 @@ export class awardsModel {
                 }
             }
         } catch (e) {
+            logger.error('ERR-001')
             return {
                 status: 500,
                 content: {
@@ -289,6 +317,7 @@ export class awardsModel {
             }
     
         } catch (e) {
+            logger.error('ERR-001')
             return {
                 status: 500,
                 content: {
@@ -298,6 +327,7 @@ export class awardsModel {
                 }
             }
         }
+        logger.error('ERR-001')
         return {
             status: 500,
             content: {

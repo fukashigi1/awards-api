@@ -20,5 +20,11 @@ export const BR = {
     '020': 'The email or username provided are already in use.',
     '021': 'You can not have two awards by the same name.',
     '022': 'No fields to update.',
-    '023': 'No awards have been modified. Please check your input.'
+    '023': 'No awards have been modified. Please check your input.',
+    '024': 'No changes have been made.',
+    '025': 'This question id does not correspond to this award.',
+    '026': 'The url provided does not match a youtube video or image.',
+    '027': 'The question provided can not be empty.',
+    '028': 'The question type provided can not be empty.',
+    '029': 'The question order id provided can not be empty.'
 }

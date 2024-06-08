@@ -70,16 +70,26 @@ async function checkIfUserExists(email, username) {
     return await connection.query('SELECT 1 FROM users WHERE email = ? AND username = ?', [email, username])
 }
 
+export function checkIfUserIsAdmin(userType) {
+    if (PERMISSIONS.ADMIN != userType) {
+        return true
+    } else {
+        return false
+    }
+}
+
 // ROUTES
 const v1 = '/api/v1'
 
 import { awardsRoute } from './v1/routes/awardsRoute.js'
 import { registerRoute } from './v1/routes/registerRoute.js'
 import { loginRoute } from './v1/routes/loginRoute.js'
+import { editorRoute } from './v1/routes/editorRoute.js'
 
 app.use(`${v1}/awards`, authenticateToken([PERMISSIONS.ADMIN, PERMISSIONS.FREE_ACCOUNT]), awardsRoute)
 app.use(`${v1}/register`, registerRoute)
 app.use(`${v1}/login`, loginRoute)
+app.use(`${v1}/editor`, authenticateToken([PERMISSIONS.ADMIN, PERMISSIONS.FREE_ACCOUNT]), editorRoute)
 
 app.get('/status', (req, res) => {
     res.status(200).send('OK')

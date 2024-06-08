@@ -65,6 +65,7 @@ export class registerModel {
             }
 
         } catch (e) {
+            logger.error('ERR-001')
             return {
                 status: 500,
                 content: {
@@ -106,6 +107,7 @@ export class registerModel {
                         }
                     }
                 } catch (e) {
+                    logger.error('ERR-001')
                     return {
                         status: 500,
                         content: {
@@ -117,6 +119,7 @@ export class registerModel {
                 }
                 
             } catch (e) {
+                logger.error('ERR-002')
                 return {
                     status: 500,
                     content: {
@@ -127,6 +130,7 @@ export class registerModel {
                 }
             }
         }
+        logger.error('ERR-001')
         return {
             status: 500,
             content: {
