@@ -69,9 +69,7 @@ export class editorModel {
 
         try {
             const [userId] = await connection.query('SELECT BIN_TO_UUID(id) as id FROM users WHERE email = ? AND username = ?', [email, username])
-
             const [selectAward] = await connection.query('SELECT 1 FROM awards WHERE owner = UUID_TO_BIN(?) AND id = UUID_TO_BIN(?)', [userId[0].id, awardId])
-
             if (selectAward.length == 0) {
                 return {
                     status: 400,
@@ -80,36 +78,38 @@ export class editorModel {
                         data: {br: '019', title: BR['019']}
                     }
                 }
-            }
-            let couldNotDelete = []
-            if (deletedQuestions.length > 0) { // Check if there are questions to be removed
-                for (let i in deletedQuestions) {
-                    try {
-                        await connection.query('DELETE FROM questions WHERE id = UUID_TO_BIN(?) AND id_award = UUID_TO_BIN(?)', [deletedQuestions[i], awardId])
-                    } catch (e) {
-                        couldNotDelete.push({br: '025', title: BR['025'], data: deletedQuestions[i]})
-                    }
-                }
+            } 
 
-                if ((questions === null || questions === undefined || questions.length === 0)  && couldNotDelete.length === 0) {
-                    return {
-                        status: 200,
-                        content: {
-                            status: 'success',
-                            data: null
+            let couldNotDelete = []
+            if (deletedQuestions !== undefined && deletedQuestions !== null && deletedQuestions != "") {
+                if (deletedQuestions.length > 0) { // Check if there are questions to be removed
+                    for (let i in deletedQuestions) {
+                        try {
+                            await connection.query('DELETE FROM questions WHERE id = UUID_TO_BIN(?) AND id_award = UUID_TO_BIN(?)', [deletedQuestions[i], awardId])
+                        } catch (e) {
+                            couldNotDelete.push({br: '025', title: BR['025'], data: deletedQuestions[i]})
                         }
                     }
-                } 
+    
+                    if ((questions === null || questions === undefined || questions.length === 0)  && couldNotDelete.length === 0) {
+                        return {
+                            status: 200,
+                            content: {
+                                status: 'success',
+                                data: null
+                            }
+                        }
+                    } 
+                }
             }
 
             if (questions !== null && questions !== undefined && questions.length !== 0) {
-                let questionInputId, questionDbId
+                let question, questionDbId
                 for (let i in questions) {
                     let changed = false
-                    questionInputId = questions[i]
-
-                    if (questionInputId.url !== undefined) {
-                        if (!validateUrl(questionInputId.url)){
+                    question = questions[i]
+                    if (question.url !== undefined) {
+                        if (!validateUrl(question.url)){
                             return {
                                 status: 400,
                                 content: {
@@ -134,20 +134,19 @@ export class editorModel {
 
                     let errors = []
 
-                    if (questionInputId.question === undefined || questionInputId.question === null || questionInputId.question === "") {
+                    if (question.question === undefined || question.question === null || question.question === "") {
                         errors.push({br: '027', title: BR['027']})
                     }
 
-                    if (questionInputId.question_type === undefined || questionInputId.question_type === null || questionInputId.question_type === "") {
+                    if (question.questionType === undefined || question.questionType === null || question.questionType === "") {
                         errors.push({br: '028', title: BR['028']})
                     }
 
-                    if (questionInputId.order_id === undefined || questionInputId.order_id === null || questionInputId.order_id === "") {
+                    if (question.orderId === undefined || question.orderId === null || question.orderId === "") {
                         errors.push({br: '029', title: BR['029']})
                     }
                     
-                    console.log("aca")
-                    if (errors.length !== 0) { // QUEDÉ AQUI ///////////////////////
+                    if (errors.length !== 0) { 
                         return {
                             status: 400,
                             content: {
@@ -156,44 +155,50 @@ export class editorModel {
                             }
                         }
                     }
+                    if (question.mandatory === undefined || question.mandatory > 1) {
+                        question.mandatory = 1
+                    } else if (question.mandatory < 0) {
+                        question.mandatory = 0
+                    }
 
-                    if (questionInputId.mandatory === undefined || questionInputId.mandatory > 1) {
-                        questionInputId.mandatory = 1
-                    } else if (questionInputId.mandatory < 0) {
-                        questionInputId.mandatory = 0
+
+                    if (question.description === undefined || question.description === null || question.description === '') {
+                        question.description = ""
+                    }
+
+                    if (question.questionChoices === undefined || question.questionChoices === null || question.questionChoices === '') {
+                        question.questionChoices = ""
                     }
                     
-                    for (let x in selectQuestions) {
-                        questionDbId = selectQuestions[x]
-                        if (questionInputId.id === questionDbId.id) {
-                            await connection.query('UPDATE questions SET question = ?, question_type = ?, order_id = ?, url = ?, mandatory = ?, question_choices = ?,description= ? WHERE id = UUID_TO_BIN(?)', [questionInputId.question, questionInputId.question_type, questionInputId.order_id, questionInputIdurl,questionInputId.mandatory, questionInputId.question_choices, questionInputId.description, questionInputId.id])
-                            changed = true
-                            break
-                        } 
+                    let query = "INSERT INTO questions (id_award, question, question_type, order_id, url, mandatory, question_choices, description) VALUE(UUID_TO_BIN(?), ?, ?, ?, ?, ?, ?, ?)"
+                    let params = [awardId, question.question, question.questionType, question.orderId, question.url, question.mandatory, question.questionChoices, question.description]
+                    
+                    
+                    const [selectQuestions] = await connection.query('SELECT BIN_TO_UUID(id) as id, question, question_type as questionType, url, mandatory, question_choices as questionChoices, description FROM questions WHERE id_award = UUID_TO_BIN(?) ORDER BY order_id' , [awardId])
+                    if (selectQuestions.length > 0) {
+                        for (let x in selectQuestions) {
+                            questionDbId = selectQuestions[x]
+                            if (question.id === questionDbId.id) {
+                                console.log("hola")
+                                await connection.query('UPDATE questions SET question = ?, question_type = ?, order_id = ?, url = ?, mandatory = ?, question_choices = ?, description = ? WHERE id = UUID_TO_BIN(?)', [question.question, question.questionType, question.orderId, question.url, question.mandatory, question.questionChoices, question.description, question.id])
+                                changed = true
+                                break
+                            } 
+                        }
+                        if (!changed) {
+                            await connection.query(query, params)
+                        }
+                    } else {  
+                        await connection.query(query, params)
+                        
                     }
-                    if (!changed) {
-                        console.log ("ohola");
-                        await connection.query('INSERT INTO questions (id_award, question, question_type, order_id, url, mandatory, question_choices, description) VALUE(?, ?, ?, ?, ?, ?, ?, ?)', [award_id, questionInputId.question, questionInputId.question_type, questionInputId.order_id, questionInputId.urlquestionInputId.mandatory, questionInputId.question_choices, questionInputId.description])
-                    }
+
+
                 }
 
-            } else {  // En caso de que no hayan questions
-                let question
-                for (let i in questions) {
-                    question = questions[i]
-                    await connection.query('INSERT INTO questions (id_award, question, question_type, order_id, url, mandatory, question_choices, description) VALUE(?, ?, ?, ?, ?, ?), ?', [award_id, question.question, question.question_type, question.order_id, question.url, question.mandatory, questioquestion_choices, question.description])
-                }
-                
-            }
+            } 
 
-            return {
-                status: 200,
-                content: {
-                    status: 'success',
-                    data: "yea"
-                }
-            }
-            /*if (couldNotDelete.length != 0) {
+            if (couldNotDelete.length != 0) {
                 return {
                     status: 400,
                     content: {
@@ -201,7 +206,14 @@ export class editorModel {
                         data: couldNotDelete
                     }
                 }
-            }*/
+            }
+            return {
+                status: 200,
+                content: {
+                    status: 'success',
+                    data: null
+                }
+            }
 
 
         } catch (e) {
